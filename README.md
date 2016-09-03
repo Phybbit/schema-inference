@@ -23,7 +23,7 @@ Or install it yourself as:
 
 ## Usage
 
-1. Report information on nested data structure
+- Report information on nested data structure
 
 ```
 schema = Schema::Inference.schema(dataset: [
@@ -55,7 +55,7 @@ schema['person.weight'][:type] # Numeric (inferred to be numeric, even though an
 schema['updated_at'][:type]    # Time
 ```
 
-2. Recover types from string serialization
+- Recover types from string serialization
 
 ```
 schema = Schema::Inference.schema(dataset: {
@@ -70,7 +70,7 @@ schema['serialized_numeric'][:type] # Numeric
 schema['serialized_boolean'][:type] # Boolean
 ```
 
-3. If you need to load a lot of data consider using the following pattern:
+- If you need to load a lot of data consider using the following pattern:
 ```
 schema = Schema::Inference.schema(batch_count: 10) do |idx\
  # Pull and return some large amount of data.
