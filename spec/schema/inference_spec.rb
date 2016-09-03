@@ -68,21 +68,21 @@ describe Schema::Inference do
       dataset = [
         { 'array' => [1] },
       ]
-      expect(ns.schema(dataset: dataset)['array.0'][:type]).to eq Integer
+      expect(ns.schema(dataset: dataset, extended: true)['array|0'][:type]).to eq Integer
     end
 
     it 'recognizes fields in hashes' do
       dataset = [
         { 'in' => { 'hash' => 'some string' } }
       ]
-      expect(ns.schema(dataset: dataset)['in.hash'][:type]).to eq String
+      expect(ns.schema(dataset: dataset)['in|hash'][:type]).to eq String
     end
 
     it 'recognizes fields in arrays' do
       dataset = [
         { 'array' => [{ 'deep' => 'structure' }] }
       ]
-      expect(ns.schema(dataset: dataset)['array.0.deep'][:type]).to eq String
+      expect(ns.schema(dataset: dataset)['array|0|deep'][:type]).to eq String
     end
 
     it 'recognizes nils' do

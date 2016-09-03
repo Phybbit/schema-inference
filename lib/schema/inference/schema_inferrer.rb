@@ -119,12 +119,13 @@ module Schema
             }
 
             terminal_array_keys.each do |key_prefix, keys|
-              usage = keys.map{ |x| table_schema[x][:usage_count] }
-              # some keys may have been removed by the previous nil removal step
-              # e.g.: some arrays can have the shape: [1,nil,1]
-              usage_count = usage.max
-              max_size = keys.count
-              min_size = usage.count { |x| x == usage.max }
+              keys_usage_count = keys.map{ |x| table_schema[x][:usage_count] }
+              usage_count = keys_usage_count.max
+              # min size = how many keys have "always" been used
+              # As the keys may not have been used at the same time,
+              # this may not be valid depending on the array usage.
+              min_size = keys_usage_count.count { |x| x == usage_count }
+              max_size = keys.map { |x| x.split(SEPARATOR)[-1].to_i }.max + 1
 
               # delete keys that are part of they array
               keys.each { |key, _| table_schema.delete(key) }
