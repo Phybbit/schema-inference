@@ -102,6 +102,14 @@ describe Schema::Inference::SchemaInferrer do
       expect(inferrer.infer_schema(dataset: data)['numeric'][:type]).to eq Numeric
     end
 
+    it 'supports a different separator' do
+      dataset = [
+        { 'array' => [{ 'deep' => 'structure' }] }
+      ]
+      inferrer = Schema::Inference::SchemaInferrer.new(separator: '|')
+      expect(inferrer.infer_schema(dataset: dataset)['array|0|deep'][:type]).to eq String
+    end
+
     it 'supports streaming' do
       datasets = [
         [{'numeric' => 1}],
