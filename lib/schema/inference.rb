@@ -14,7 +14,7 @@ module Schema
   module Inference
 
     def Inference.schema(*args)
-      SchemaInferrer.infer_schema(*args)
+      SchemaInferrer.new.infer_schema(*args)
     end
 
   end
