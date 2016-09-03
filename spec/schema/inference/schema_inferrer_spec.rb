@@ -97,6 +97,14 @@ describe Schema::Inference::SchemaInferrer do
       expect(inferrer.infer_schema(dataset: dataset)['with_nils'][:type]).to eq Array
     end
 
+    it 'supports times' do
+      data = [
+        { 'time' => Time.now },
+        { 'time' => '2016-01-01T00:00:00Z' },
+      ]
+      expect(inferrer.infer_schema(dataset: data)['time'][:type]).to eq Time
+    end
+
     it 'supports a single document/hash' do
       data = { 'numeric' => 1.5 }
       expect(inferrer.infer_schema(dataset: data)['numeric'][:type]).to eq Numeric
