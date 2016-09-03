@@ -97,6 +97,11 @@ describe Schema::Inference::SchemaInferrer do
       expect(inferrer.infer_schema(dataset: dataset)['with_nils'][:type]).to eq Array
     end
 
+    it 'supports a single document/hash' do
+      data = { 'numeric' => 1.5 }
+      expect(inferrer.infer_schema(dataset: data)['numeric'][:type]).to eq Numeric
+    end
+
     it 'supports streaming' do
       datasets = [
         [{'numeric' => 1}],
@@ -104,6 +109,8 @@ describe Schema::Inference::SchemaInferrer do
       ]
 
       schema = inferrer.infer_schema(batch_count: 2) do |idx|
+        # In a real use case with a lot of data, fetching/accessing the data
+        # here would avoid the IPC cost of sending the data to the child process.
         datasets[idx]
       end
 

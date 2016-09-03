@@ -19,25 +19,21 @@ module Schema
       def infer_schema(dataset: [], batch_count: 0, extended: false)
         # support detecting schemas of single objects
         dataset = [dataset] if dataset.is_a?(Hash)
-        raise ArgumentError, 'dataset must be an array or a hash' unless dataset.is_a?(Array)
+        validate_dataset(dataset)
 
         has_dataset = dataset.count > 0 || (block_given? && batch_count > 0)
         raise ArgumentError, 'a dataset or a block with a batch count must be passed' unless has_dataset
 
-        if dataset.count > 0
+        if dataset.is_a?(Array) && dataset.count > 0
           # divide in batches to process in parallel
-          count_per_process = (dataset.count / Parallel.processor_count.to_f).ceil
-          batch_count = (dataset.count / count_per_process.to_f).ceil
+          per_process = (dataset.count / Parallel.processor_count.to_f).ceil
+          batch_count = (dataset.count / per_process.to_f).ceil
         end
 
-        results = parallel_map(batch_count.times) do |i|
-          if block_given?
-            batch = yield(i)
-          else
-            batch = dataset[i*count_per_process...(i+1)*count_per_process]
-          end
+        results = parallel_map(batch_count.times) { |i|
+          batch = block_given? ? yield(i) : dataset[i*per_process...(i+1)*per_process]
           { partial_schema: data_schema(batch), count: batch.count }
-        end
+        }
 
         partial_schemas = results.map { |r| r[:partial_schema] }
         total_count = results.map { |r| r[:count] }.reduce(:+)
@@ -47,6 +43,11 @@ module Schema
       end
 
       private
+
+      def validate_dataset(dataset)
+        return if dataset.is_a?(Array)
+        raise ArgumentError, 'dataset must be an array or a hash'
+      end
 
       def data_schema(data)
         table_schema = {}
