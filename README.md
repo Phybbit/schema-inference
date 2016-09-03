@@ -26,14 +26,59 @@ Or install it yourself as:
 1. Report information on nested data structure
 
 ```
+schema = Schema::Inference.schema(dataset: [
+  {
+    'person' => {
+      'name' => 'Bob',
+      'age' => 30,
+      'weight' => 60
+    },
+    'updated_at' => '2016-01-01T00:00:00Z'
+  },
+  {
+    'person' => {
+      'name' => 'Alice',
+      # Alice does not want to show her age
+      'weight' => 50.5
+    },
+    'updated_at' => '2016-01-01T00:00:00Z'
+  },
+])
 
+schema['person.name'][:type]  # String
+schema['person.name'][:usage] # 1.0 (100% of the entries have a name)
+
+schema['person.age'][:type]  # Integer
+schema['person.age'][:usage] # 0.5 (50% of the entries have an age)
+
+schema['person.weight'][:type] # Numeric (inferred to be numeric, even though an integer was present)
+schema['updated_at'][:type]    # Time
 ```
 
 2. Recover types from string serialization
 
 ```
+schema = Schema::Inference.schema(dataset: {
+  'serialized_time' => '2016-01-01T00:00:00Z',
+  'serialized_integer' => '100',
+  'serialized_numeric' => '0.5',
+  'serialized_boolean' => 'true',
+})
+schema['serialized_time'][:type]    # Time
+schema['serialized_integer'][:type] # Integer
+schema['serialized_numeric'][:type] # Numeric
+schema['serialized_boolean'][:type] # Boolean
+```
 
-
+3. If you need to load a lot of data consider using the following pattern:
+```
+schema = Schema::Inference.schema(batch_count: 10) do |idx\
+ # Pull and return some large amount of data.
+ # Fetching/accessing the data here would avoid the IPC cost of
+ # sending the data to the child process for parallel processing.
+ # e.g.:
+ MongoClient.find.limit(1000).offset(1000 * idx)
+end
 ```
 
 ## Development
