@@ -32,7 +32,7 @@ module Schema
 
         results = parallel_map(batch_count.times) do |i|
           if block_given?
-            batch = yield
+            batch = yield(i)
           else
             batch = dataset[i*count_per_process...(i+1)*count_per_process]
           end

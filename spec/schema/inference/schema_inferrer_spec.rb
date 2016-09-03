@@ -96,5 +96,18 @@ describe Schema::Inference::SchemaInferrer do
       ]
       expect(inferrer.infer_schema(dataset: dataset)['with_nils'][:type]).to eq Array
     end
+
+    it 'supports streaming' do
+      datasets = [
+        [{'numeric' => 1}],
+        [{'numeric' => 1.5}]
+      ]
+
+      schema = inferrer.infer_schema(batch_count: 2) do |idx|
+        datasets[idx]
+      end
+
+      expect(schema['numeric'][:type]).to eq Numeric
+    end
   end
 end
