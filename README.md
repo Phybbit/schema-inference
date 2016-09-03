@@ -1,8 +1,9 @@
 # Schema::Inference
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/schema/inference`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Supports inferring tabular schemas from deep nested data structures.
+There 2 main uses for this gem:
+- gives schema information on a nested data structure (useful when converting to a tabular format)
+- recover types from data that has been serialized to string (e.g. JSON or CSV)
 
 ## Installation
 
@@ -22,7 +23,18 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+1. Report information on nested data structure
+
+```
+
+```
+
+2. Recover types from string serialization
+
+```
+
+
+```
 
 ## Development
 
