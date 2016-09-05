@@ -25,7 +25,7 @@ Or install it yourself as:
 
 - Report information on nested data structure
 
-```
+```ruby
 schema = Schema::Inference.schema(dataset: [
   {
     'person' => {
@@ -57,7 +57,7 @@ schema['updated_at'][:type]    # Time
 
 - Recover types from string serialization
 
-```
+```ruby
 schema = Schema::Inference.schema(dataset: {
   'serialized_time' => '2016-01-01T00:00:00Z',
   'serialized_integer' => '100',
@@ -71,8 +71,8 @@ schema['serialized_boolean'][:type] # Boolean
 ```
 
 - If you need to load a lot of data consider using the following pattern:
-```
-schema = Schema::Inference.schema(batch_count: 10) do |idx\
+```ruby
+schema = Schema::Inference.schema(batch_count: 10) do |idx|
  # Pull and return some large amount of data.
  # Fetching/accessing the data here would avoid the IPC cost of
  # sending the data to the child process for parallel processing.
