@@ -132,5 +132,15 @@ describe Schema::Inference::SchemaInferrer do
 
       expect(schema['numeric'][:type]).to eq Numeric
     end
+
+    it 'supports converting types to string' do
+      dataset = [
+        { 'string' => 'a string' },
+      ]
+      inferrer = Schema::Inference::SchemaInferrer.new(convert_types_to_string: true)
+      schema = inferrer.infer_schema(dataset: dataset)
+      expect(schema['string'][:type]).to eq 'string'
+      expect(schema['string'][:types]['string']).to eq 1
+    end
   end
 end

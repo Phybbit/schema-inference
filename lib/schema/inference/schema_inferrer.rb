@@ -3,8 +3,9 @@ module Schema
     class SchemaInferrer
       attr_accessor :separator
 
-      def initialize(separator: '.')
+      def initialize(separator: '.', convert_types_to_string: false)
         @separator = separator
+        @convert_types_to_string = convert_types_to_string
       end
 
       # Generate a schema based on this collection's records.
@@ -148,7 +149,7 @@ module Schema
           table_schema[k][:usage] = table_schema[k][:usage_count] / total_count.to_f
         }
 
-        table_schema
+        @convert_types_to_string ? convert_types_to_string(table_schema) : table_schema
       end
 
       NumericTypes = [Numeric, Integer].freeze
@@ -230,6 +231,14 @@ module Schema
 
       def is_integer?(value)
         (/^[+-]?[0-9]+$/ =~ value).present?
+      end
+
+      def convert_types_to_string(schema)
+        schema.each { |k, v|
+          schema[k][:type] = schema[k][:type].to_s.downcase
+          schema[k][:types] = schema[k][:types].map { |k1,v1| [k1.to_s.downcase, v1] }.to_h
+        }
+        schema
       end
 
       def parallel_map(itr, &block)
