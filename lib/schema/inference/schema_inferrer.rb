@@ -50,28 +50,51 @@ module Schema
         raise ArgumentError, 'dataset must be an array or a hash'
       end
 
+      FIXNUM_MAX = (2**(0.size * 8 -2) -1)
+
       def data_schema(data)
         table_schema = {}
         data.each do |record|
           # fetch the record schema & update the general schema
           rec_schema = record_schema(record)
-          rec_schema.each do |field_schema|
-            table_schema[field_schema[:field]] ||= {type: field_schema[:type], usage_count: 0}
-            if table_schema[field_schema[:field]][:type] != field_schema[:type]
-              if table_schema[field_schema[:field]][:type] == NilClass
-                table_schema[field_schema[:field]][:type] = field_schema[:type]
-              elsif field_schema[:type] != nil
-                table_schema[field_schema[:field]][:type] = lowest_common_type(field_schema[:type], table_schema[field_schema[:field]][:type])
+          rec_schema.each do |field|
+            field_schema = table_schema[field[:field]] ||= {type: field[:type], usage_count: 0}
+            field_schema = table_schema[field[:field]]
+            if field_schema[:type] != field[:type]
+              if field_schema[:type] == NilClass
+                # if it was set as nil, we now set it to a concrete type
+                field_schema[:type] = field[:type]
+              elsif field[:type] != nil
+                # if it had a different (non-nil) type, then try to upcast
+                field_schema[:type] = lowest_common_type(field[:type], field_schema[:type])
               end
             end
-            table_schema[field_schema[:field]][:usage_count] += 1
-            table_schema[field_schema[:field]][:types] ||= {}
-            table_schema[field_schema[:field]][:types][field_schema[:type]] ||= 0
-            table_schema[field_schema[:field]][:types][field_schema[:type]] += 1
+
+            field_schema[:usage_count] += 1
+            field_schema[:types] ||= {}
+            field_schema[:types][field[:type]] ||= { count: 0 }
+            field_schema[:types][field[:type]][:count] += 1
+
+            if type_has_min_max?(field[:type])
+              field_size = value_length(field[:inferred_value])
+              field_schema[:types][field[:type]][:min] = [field_schema[:types][field[:type]][:min] || FIXNUM_MAX, field_size].min
+              field_schema[:types][field[:type]][:max] = [field_schema[:types][field[:type]][:max] || 0, field_size].max
+            end
+
+
           end
         end
 
         table_schema
+      end
+
+      def type_has_min_max?(type)
+        type == String || NumericTypes.include?(type)
+      end
+
+      def value_length(value)
+        return value.length if value.is_a?(String)
+        value # leave as-is otherwise
       end
 
       def process_schema_results(results, total_count, extended)
@@ -81,10 +104,14 @@ module Schema
           table_schema.each { |k, v|
             next if res[k].blank?
 
-            # aggregate types count
-            res[k][:types].each { |type, count|
-              table_schema[k][:types][type] ||= 0
-              table_schema[k][:types][type] += count
+            # aggregate types count, set min and max
+            res[k][:types].each { |type, info|
+              table_schema[k][:types][type] ||= { count: 0 }
+              table_schema[k][:types][type][:count] += info[:count]
+              if type_has_min_max?(type)
+                table_schema[k][:types][type][:min] = [table_schema[k][:types][type][:min] || FIXNUM_MAX, info[:min]].min
+                table_schema[k][:types][type][:max] = [table_schema[k][:types][type][:max] || 0, info[:max]].max
+              end
             }
 
             # aggregate other informations
@@ -174,7 +201,7 @@ module Schema
             record_schema(x, field_name)
           }
         else
-          { field: name, type: detect_type_of(record) }
+          { field: name, type: detect_type_of(record), inferred_value: inferred_value_of(record) }
         end
       end
 
@@ -194,6 +221,20 @@ module Schema
         end
 
         Object
+      end
+
+      def inferred_value_of(value)
+        return value unless value.is_a?(String)
+
+        return value.to_i if value =~ /^[-+]?[0-9]+$/
+        return value.to_f if value =~ /^[-+]?[0-9]*\.?[0-9]+$/
+        return true  if value.downcase == 'true'
+        return false if value.downcase == 'false'
+
+        time_value = Timeliness.parse(value)
+        return time_value if time_value
+
+        value
       end
 
       def key_access_tokens(key:)

@@ -140,7 +140,43 @@ describe Schema::Inference::SchemaInferrer do
       inferrer = Schema::Inference::SchemaInferrer.new(convert_types_to_string: true)
       schema = inferrer.infer_schema(dataset: dataset)
       expect(schema['string'][:type]).to eq 'string'
-      expect(schema['string'][:types]['string']).to eq 1
+      expect(schema['string'][:types]['string'][:count]).to eq 1
+    end
+
+    it 'supports counting each type' do
+      dataset = [
+        { 'string' => 'a string' },
+      ]
+      schema = inferrer.infer_schema(dataset: dataset)
+      expect(schema['string'][:types][String][:count]).to eq 1
+    end
+
+    it 'supports inferring the max of a type' do
+      dataset = [
+        { 'a_string' => 'there are 23 characters' },
+        { 'a_string' => 'a few characters' },
+      ]
+      schema = inferrer.infer_schema(dataset: dataset)
+      expect(schema['a_string'][:types][String][:max]).to eq 23
+    end
+
+    it 'supports inferring the min of a type' do
+      dataset = [
+        { 'a_string' => 'there are 23 characters' },
+        { 'a_string' => 'there are more characters' },
+      ]
+      schema = inferrer.infer_schema(dataset: dataset)
+      expect(schema['a_string'][:types][String][:min]).to eq 23
+    end
+
+    it 'does not add a min/max on unsupported types' do
+      dataset = [
+        { 'bool' => true },
+        { 'time' => Time.now },
+      ]
+      schema = inferrer.infer_schema(dataset: dataset)
+      expect(schema['bool'][:types][Boolean][:min]).to eq nil
+      expect(schema['time'][:types][Time][:min]).to eq nil
     end
   end
 end
