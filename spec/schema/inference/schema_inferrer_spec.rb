@@ -143,6 +143,15 @@ describe Schema::Inference::SchemaInferrer do
       expect(schema['string'][:types]['string'][:count]).to eq 1
     end
 
+    it 'supports converting types to string with an array type' do
+      dataset = [
+        { 'array' => [1] },
+      ]
+      inferrer = Schema::Inference::SchemaInferrer.new(convert_types_to_string: true)
+      schema = inferrer.infer_schema(dataset: dataset)
+      expect(schema['array'][:type]).to eq 'array'
+    end
+
     it 'supports counting each type' do
       dataset = [
         { 'string' => 'a string' },

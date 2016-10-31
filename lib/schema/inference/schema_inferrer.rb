@@ -277,7 +277,8 @@ module Schema
       def convert_types_to_string(schema)
         schema.each { |k, v|
           schema[k][:type] = schema[k][:type].to_s.downcase
-          schema[k][:types] = schema[k][:types].map { |k1,v1| [k1.to_s.downcase, v1] }.to_h
+          types = schema[k][:types]
+          schema[k][:types] = types.map { |k1,v1| [k1.to_s.downcase, v1] }.to_h if types.present?
         }
         schema
       end
