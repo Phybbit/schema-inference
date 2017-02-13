@@ -1,3 +1,6 @@
+[![Build
+Status](https://travis-ci.org/Phybbit/schema-inference.svg?branch=master)](https://travis-ci.org/Phybbit/schema-inference)
+
 # Schema::Inference
 
 Supports inferring tabular schemas from deep nested data structures.
