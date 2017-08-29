@@ -50,7 +50,7 @@ module Schema
         raise ArgumentError, 'dataset must be an array or a hash'
       end
 
-      FIXNUM_MAX = (2**(0.size * 8 -2) -1)
+      INT_MAX = 2_147_483_648
 
       def data_schema(data)
         table_schema = {}
@@ -77,7 +77,7 @@ module Schema
 
             if type_has_min_max?(field[:type])
               field_size = value_length(field[:inferred_value])
-              field_schema[:types][field[:type]][:min] = [field_schema[:types][field[:type]][:min] || FIXNUM_MAX, field_size].min
+              field_schema[:types][field[:type]][:min] = [field_schema[:types][field[:type]][:min] || INT_MAX, field_size].min
               field_schema[:types][field[:type]][:max] = [field_schema[:types][field[:type]][:max] || 0, field_size].max
             end
 
@@ -109,7 +109,7 @@ module Schema
               table_schema[k][:types][type] ||= { count: 0 }
               table_schema[k][:types][type][:count] += info[:count]
               if type_has_min_max?(type)
-                table_schema[k][:types][type][:min] = [table_schema[k][:types][type][:min] || FIXNUM_MAX, info[:min]].min
+                table_schema[k][:types][type][:min] = [table_schema[k][:types][type][:min] || INT_MAX, info[:min]].min
                 table_schema[k][:types][type][:max] = [table_schema[k][:types][type][:max] || 0, info[:max]].max
               end
             }
@@ -207,14 +207,20 @@ module Schema
 
       def detect_type_of(value)
         return Boolean  if value.is_a?(TrueClass) || value.is_a?(FalseClass)
-        return Integer  if value.is_a? Integer
+
+        if value.is_a? Integer
+          return Integer if value.abs <= INT_MAX
+          return String
+        end
+
         return Numeric  if value.is_a? Numeric
         return Time     if value.is_a? Time
         return NilClass if value.is_a? NilClass
 
+
         if value.is_a? String
-          return Integer if value =~ /^[-+]?[0-9]+$/
-          return Numeric if value =~ /^[-+]?[0-9]*\.?[0-9]+$/
+          return Integer if value =~ /^[-+]?[0-9]+$/ && value.to_i.abs <= INT_MAX
+          return Numeric if value =~ /^[-+]?[0-9]*\.[0-9]+$/
           return Boolean if %w(false true).include?(value.downcase)
           return Time if Timeliness.parse(value) != nil
           return String

@@ -23,6 +23,13 @@ describe Schema::Inference::SchemaInferrer do
       expect(inferrer.infer_schema(dataset: dataset)['integer'][:type]).to eq Integer
     end
 
+    it 'treats very long integers as strings' do
+      dataset = [
+        { 'integer' => 123456789012345678901234567890123456789012345678901234567890 },
+      ]
+      expect(inferrer.infer_schema(dataset: dataset)['integer'][:type]).to eq String
+    end
+
     it 'recognizes booleans' do
       dataset = [
         { 'bool' => true },
