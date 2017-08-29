@@ -76,7 +76,7 @@ module Schema
             field_schema[:types][field[:type]][:count] += 1
 
             if type_has_min_max?(field[:type])
-              field_size = value_length(field[:inferred_value])
+              field_size = value_length(field[:inferred_value], field[:type])
               field_schema[:types][field[:type]][:min] = [field_schema[:types][field[:type]][:min] || INT_MAX, field_size].min
               field_schema[:types][field[:type]][:max] = [field_schema[:types][field[:type]][:max] || 0, field_size].max
             end
@@ -92,8 +92,8 @@ module Schema
         type == String || NumericTypes.include?(type)
       end
 
-      def value_length(value)
-        return value.length if value.is_a?(String)
+      def value_length(value, type)
+        return value.to_s.length if type == String
         value # leave as-is otherwise
       end
 
